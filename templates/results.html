@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Exam Results - ExamGuard</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+        
+   body {
+    font-family: 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    color: #fff;
+    position: relative;
+    overflow-x: hidden;
+    background: linear-gradient(135deg, #0d1b2a 0%, #1b263b 50%, #415a77 100%);
+}
+body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: transparent;
+    pointer-events: none;
+    z-index: 0;
+}
+.navbar, .container { position: relative; z-index: 1; }
+
+
+@keyframes floatBg {
+    from { transform: translateX(0) translateY(0); }
+    to { transform: translateX(-50%) translateY(-100px); }
+}
+.navbar, .container { position: relative; z-index: 1; }
+      
+      .navbar {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 15px 40px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .navbar h1 {
+        font-size: 20px;
+        color: #4fc3f7;
+      }
+      .logout-btn {
+        padding: 8px 16px;
+        background: rgba(255, 80, 80, 0.2);
+        border: 1px solid rgba(255, 80, 80, 0.4);
+        border-radius: 8px;
+        color: #ff6b6b;
+        text-decoration: none;
+        font-size: 13px;
+      }
+      .container {
+        padding: 40px;
+        max-width: 800px;
+        margin: 0 auto;
+      }
+
+      /* Score hero */
+      .score-hero {
+        text-align: center;
+        padding: 40px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        margin-bottom: 25px;
+      }
+      .score-circle {
+        width: 140px;
+        height: 140px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #4fc3f7, #0288d1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        font-size: 36px;
+        font-weight: 700;
+      }
+      .score-circle.fail {
+        background: linear-gradient(135deg, #ff6b6b, #c62828);
+      }
+      .score-hero h2 {
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
+      .score-hero p {
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 14px;
+      }
+
+      /* Stats grid */
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+        margin-bottom: 25px;
+      }
+      .stat-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        padding: 20px;
+        text-align: center;
+      }
+      .stat-card .icon {
+        font-size: 28px;
+        margin-bottom: 10px;
+      }
+      .stat-card .value {
+        font-size: 28px;
+        font-weight: 700;
+        color: #4fc3f7;
+        margin-bottom: 5px;
+      }
+      .stat-card .value.warning {
+        color: #ffc107;
+      }
+      .stat-card .value.danger {
+        color: #ff6b6b;
+      }
+      .stat-card .label {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.5);
+      }
+
+      /* Behaviour section */
+      .section-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 20px;
+      }
+      .section-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #4fc3f7;
+        margin-bottom: 20px;
+      }
+      .behaviour-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      }
+      .behaviour-row:last-child {
+        border-bottom: none;
+      }
+      .behaviour-row .b-label {
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.7);
+      }
+      .behaviour-row .b-value {
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .behaviour-row .b-value.good {
+        color: #66bb6a;
+      }
+      .behaviour-row .b-value.warning {
+        color: #ffc107;
+      }
+      .behaviour-row .b-value.danger {
+        color: #ff6b6b;
+      }
+
+      /* Anomaly status */
+      .anomaly-card {
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 25px;
+        text-align: center;
+      }
+      .anomaly-card.normal {
+        background: rgba(102, 187, 106, 0.1);
+        border: 1px solid rgba(102, 187, 106, 0.3);
+      }
+      .anomaly-card.anomalous {
+        background: rgba(255, 107, 107, 0.1);
+        border: 1px solid rgba(255, 107, 107, 0.3);
+      }
+      .anomaly-card .a-icon {
+        font-size: 40px;
+        margin-bottom: 10px;
+      }
+      .anomaly-card h3 {
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
+      .anomaly-card.normal h3 {
+        color: #66bb6a;
+      }
+      .anomaly-card.anomalous h3 {
+        color: #ff6b6b;
+      }
+      .anomaly-card p {
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 14px;
+      }
+
+      .home-btn {
+        display: block;
+        text-align: center;
+        padding: 14px;
+        background: linear-gradient(135deg, #4fc3f7, #0288d1);
+        border-radius: 10px;
+        color: #fff;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 15px;
+        transition: opacity 0.3s;
+      }
+      .home-btn:hover {
+        opacity: 0.9;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="navbar">
+      <h1>🎓 ExamGuard</h1>
+      <a href="/logout" class="logout-btn">Logout</a>
+    </div>
+
+    <div class="container">
+      <!-- Score Hero -->
+      <div class="score-hero">
+        <div
+          class="score-circle {% if exam_session.score >= 50 %}{% else %}fail{% endif %}"
+        >
+          {{ "%.1f"|format(exam_session.score) }}%
+        </div>
+        <h2>{{ exam.title }}</h2>
+        <p>
+          Completed on {{ exam_session.end_time.strftime('%d %B %Y at %H:%M') }}
+        </p>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="icon">⏱</div>
+          <div class="value">
+            {% if log %}{{ (log.time_on_exam / 60)|round(1) }}{% else %}0{%
+            endif %} min
+          </div>
+          <div class="label">Time Spent</div>
+        </div>
+        <div class="stat-card">
+          <div class="icon">🖱</div>
+          <div
+            class="value {% if log and log.total_clicks > 150 %}warning{% endif %}"
+          >
+            {{ log.total_clicks if log else 0 }}
+          </div>
+          <div class="label">Total Clicks</div>
+        </div>
+        <div class="stat-card">
+          <div class="icon">🔁</div>
+          <div
+            class="value {% if log and log.tab_switches > 3 %}danger{% elif log and log.tab_switches > 1 %}warning{% endif %}"
+          >
+            {{ log.tab_switches if log else 0 }}
+          </div>
+          <div class="label">Tab Switches</div>
+        </div>
+      </div>
+
+      <!-- Anomaly Status -->
+      {% if log %}
+      <div
+        class="anomaly-card {% if log.anomaly_label == -1 %}anomalous{% else %}normal{% endif %}"
+      >
+        <div class="a-icon">
+          {% if log.anomaly_label == -1 %}⚠️{% else %}✅{% endif %}
+        </div>
+        <h3>
+          {% if log.anomaly_label == -1 %}Anomalous Behaviour Detected{% else
+          %}Normal Behaviour{% endif %}
+        </h3>
+        <p>
+          <p>
+  {% if log.anomaly_label == -1 %}
+  Your exam behaviour was flagged as unusual by the anomaly detection system. This has been reported to your examiner for review.
+  {% else %}
+  Your exam behaviour appears normal. No suspicious activity was detected during this session.
+  {% endif %}
+{% if log.anomaly_reason %}
+<div style="margin-top:15px; background:rgba(255,255,255,0.05); border-radius:10px; padding:12px 18px;">
+    <div style="font-size:12px; color:rgba(255,255,255,0.5); margin-bottom:8px;">REASON(S) FLAGGED:</div>
+    {% for reason in log.anomaly_reason.split(', ') %}
+    <div style="font-size:14px; color:#ffb74d; margin-bottom:4px;">⚠ {{ reason }}</div>
+    {% endfor %}
+</div>
+{% endif %}
+        </p>
+        {% if log.anomaly_score %}
+        <p style="margin-top: 10px; font-size: 12px; opacity: 0.5">
+          Anomaly Score: {{ "%.4f"|format(log.anomaly_score) }}
+        </p>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <!-- Detailed Behaviour -->
+      <div class="section-card">
+        <div class="section-title">📊 Detailed Behaviour Analysis</div>
+        <div class="behaviour-row">
+          <span class="b-label">Time on Exam</span>
+          <span class="b-value good">
+            {% if log %}{{ (log.time_on_exam / 60)|round(1) }} minutes{% else
+            %}N/A{% endif %}
+          </span>
+        </div>
+        <div class="behaviour-row">
+          <span class="b-label">Average Time per Question</span>
+          <span class="b-value good">
+            {% if log %}{{ (log.avg_time_per_question / 60)|round(1) }}
+            minutes{% else %}N/A{% endif %}
+          </span>
+        </div>
+        <div class="behaviour-row">
+          <span class="b-label">Total Mouse Clicks</span>
+          <span
+            class="b-value {% if log and log.total_clicks > 150 %}warning{% else %}good{% endif %}"
+          >
+            {{ log.total_clicks if log else 0 }} clicks
+          </span>
+        </div>
+        <div class="behaviour-row">
+          <span class="b-label">Tab Switches</span>
+          <span
+            class="b-value {% if log and log.tab_switches > 3 %}danger{% elif log and log.tab_switches > 1 %}warning{% else %}good{% endif %}"
+          >
+            {{ log.tab_switches if log else 0 }} times
+          </span>
+        </div>
+        <div class="behaviour-row">
+          <span class="b-label">Exam Score</span>
+          <span
+            class="b-value {% if exam_session.score >= 50 %}good{% else %}danger{% endif %}"
+          >
+            {{ "%.1f"|format(exam_session.score) }}%
+          </span>
+        </div>
+      </div>
+
+      <a href="/student" class="home-btn">← Back to Dashboard</a>
+    </div>
+  </body>
+</html>

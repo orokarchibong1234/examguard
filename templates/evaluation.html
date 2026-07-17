@@ -1,0 +1,932 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Algorithm Evaluation – ExamGuard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      :root {
+        --bg: #0f1117;
+        --surface: #1a1d27;
+        --border: #2a2d3e;
+        --if: #6c63ff;
+        --ae: #00d4aa;
+        --danger: #ff4f6d;
+        --good: #3ecf8e;
+        --warn: #ffc107;
+        --text: #e2e8f0;
+        --muted: #7c849a;
+        --r: 12px;
+      }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Segoe UI", system-ui, sans-serif;
+        min-height: 100vh;
+      }
+      nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem 2rem;
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+      .brand {
+        font-size: 1.2rem;
+        font-weight: 700;
+      }
+      .brand span {
+        color: var(--if);
+      }
+      .nav-links {
+        display: flex;
+        gap: 0.6rem;
+      }
+      nav a {
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 0.85rem;
+        font-weight: 500;
+        padding: 0.45rem 1rem;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(255, 255, 255, 0.04);
+        transition: all 0.2s;
+      }
+      nav a:hover,
+      nav a.active {
+        color: #fff;
+        background: rgba(108, 99, 255, 0.2);
+        border-color: rgba(108, 99, 255, 0.5);
+      }
+      nav a.logout {
+        background: rgba(255, 79, 109, 0.15);
+        border-color: rgba(255, 79, 109, 0.4);
+        color: var(--danger);
+      }
+      nav a.logout:hover {
+        background: var(--danger);
+        color: #fff;
+      }
+      .page {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 2rem 1.5rem 5rem;
+      }
+      .page-header {
+        margin-bottom: 2rem;
+      }
+      .page-header h1 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 0.3rem;
+      }
+      .page-header p {
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+      .legend {
+        display: flex;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+      }
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--muted);
+      }
+      .dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+      }
+      .section-title {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--border);
+      }
+      .metric-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+      @media (max-width: 900px) {
+        .metric-grid {
+          grid-template-columns: repeat(3, 1fr);
+        }
+      }
+      .metric-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--r);
+        padding: 1.2rem 1rem;
+        text-align: center;
+      }
+      .metric-card .m-label {
+        font-size: 0.7rem;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        margin-bottom: 0.5rem;
+      }
+      .metric-card .if-val {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--if);
+      }
+      .metric-card .ae-val {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--ae);
+      }
+      .metric-card .sub {
+        font-size: 0.7rem;
+        color: var(--muted);
+        margin-top: 0.2rem;
+      }
+      .winner-badge {
+        display: inline-block;
+        font-size: 0.65rem;
+        font-weight: 700;
+        padding: 0.15rem 0.4rem;
+        border-radius: 4px;
+        margin-top: 0.3rem;
+        background: rgba(62, 207, 142, 0.15);
+        color: var(--good);
+      }
+      .chart-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+      }
+      @media (max-width: 768px) {
+        .chart-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--r);
+        padding: 1.4rem;
+      }
+      .card-title {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 1.2rem;
+      }
+      .chart-wrap {
+        position: relative;
+        height: 260px;
+      }
+      .chart-wrap.tall {
+        height: 300px;
+      }
+      .cm-wrap {
+        display: flex;
+        gap: 2rem;
+        justify-content: center;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        margin-top: 0.5rem;
+      }
+      .cm-block h4 {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--muted);
+        margin-bottom: 0.6rem;
+        text-align: center;
+      }
+      .cm-grid {
+        display: grid;
+        grid-template-columns: auto 1fr 1fr;
+        gap: 4px;
+        font-size: 0.75rem;
+      }
+      .cm-cell {
+        padding: 0.5rem 0.7rem;
+        border-radius: 6px;
+        text-align: center;
+        font-weight: 600;
+        min-width: 60px;
+      }
+      .cm-header {
+        background: transparent;
+        color: var(--muted);
+        font-size: 0.7rem;
+      }
+      .cm-tp {
+        background: rgba(62, 207, 142, 0.2);
+        color: var(--good);
+      }
+      .cm-tn {
+        background: rgba(62, 207, 142, 0.2);
+        color: var(--good);
+      }
+      .cm-fp {
+        background: rgba(255, 79, 109, 0.15);
+        color: var(--danger);
+      }
+      .cm-fn {
+        background: rgba(255, 193, 7, 0.15);
+        color: var(--warn);
+      }
+      .verdict {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--r);
+        padding: 1.8rem 2rem;
+        margin-top: 1.5rem;
+      }
+      .verdict h2 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+      }
+      .verdict-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1.2rem;
+      }
+      @media (max-width: 600px) {
+        .verdict-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .verdict-item {
+        background: var(--bg);
+        border-radius: 8px;
+        padding: 1rem;
+      }
+      .verdict-item h3 {
+        font-size: 0.8rem;
+        font-weight: 700;
+        margin-bottom: 0.4rem;
+      }
+      .verdict-item p {
+        font-size: 0.82rem;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+      .verdict-item.if h3 {
+        color: var(--if);
+      }
+      .verdict-item.ae h3 {
+        color: var(--ae);
+      }
+      .conclusion {
+        background: rgba(108, 99, 255, 0.08);
+        border: 1px solid rgba(108, 99, 255, 0.25);
+        border-radius: 8px;
+        padding: 1rem 1.2rem;
+        font-size: 0.88rem;
+        line-height: 1.6;
+      }
+      .conclusion strong {
+        color: var(--good);
+      }
+      .loading {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 60vh;
+        gap: 1rem;
+        color: var(--muted);
+      }
+      .spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid var(--border);
+        border-top-color: var(--if);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .hidden {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <div class="brand">Exam<span>Guard</span></div>
+      <div class="nav-links">
+        <a href="/examiner">📊 Monitor</a>
+        <a href="/examiner/exams">📋 Manage Exams</a>
+        <a href="/evaluation" class="active">📈 Evaluation</a>
+        <a href="/logout" class="logout">Logout</a>
+      </div>
+    </nav>
+
+    <div class="page">
+      <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>Computing evaluation metrics…</p>
+      </div>
+
+      <div id="main-content" class="hidden">
+        <div class="page-header">
+          <h1>Algorithm Evaluation</h1>
+          <p>
+            Quantitative comparison of <strong>Isolation Forest</strong> vs
+            <strong>Autoencoder</strong> on 1,100 synthetic exam behaviour
+            samples (1,000 normal + 100 anomalous).
+          </p>
+        </div>
+
+        <div class="legend">
+          <div class="legend-item">
+            <div class="dot" style="background: var(--if)"></div>
+            Isolation Forest
+          </div>
+          <div class="legend-item">
+            <div class="dot" style="background: var(--ae)"></div>
+            Autoencoder
+          </div>
+          <div class="legend-item">
+            <div class="dot" style="background: var(--danger)"></div>
+            Anomalous
+          </div>
+          <div class="legend-item">
+            <div class="dot" style="background: var(--good)"></div>
+            Normal
+          </div>
+        </div>
+
+        <div class="section-title">Key Performance Metrics</div>
+        <div class="metric-grid">
+          <div class="metric-card">
+            <div class="m-label">Precision</div>
+            <div class="if-val" id="if-precision">–</div>
+            <div class="ae-val" id="ae-precision">–</div>
+            <div class="sub">IF vs AE</div>
+            <div class="winner-badge" id="win-precision"></div>
+          </div>
+          <div class="metric-card">
+            <div class="m-label">Recall</div>
+            <div class="if-val" id="if-recall">–</div>
+            <div class="ae-val" id="ae-recall">–</div>
+            <div class="sub">IF vs AE</div>
+            <div class="winner-badge" id="win-recall"></div>
+          </div>
+          <div class="metric-card">
+            <div class="m-label">F1 Score</div>
+            <div class="if-val" id="if-f1">–</div>
+            <div class="ae-val" id="ae-f1">–</div>
+            <div class="sub">IF vs AE</div>
+            <div class="winner-badge" id="win-f1"></div>
+          </div>
+          <div class="metric-card">
+            <div class="m-label">ROC AUC</div>
+            <div class="if-val" id="if-auc">–</div>
+            <div class="ae-val" id="ae-auc">–</div>
+            <div class="sub">IF vs AE</div>
+            <div class="winner-badge" id="win-auc"></div>
+          </div>
+          <div class="metric-card">
+            <div class="m-label">Silhouette</div>
+            <div class="if-val" id="if-sil">–</div>
+            <div class="ae-val" id="ae-sil">–</div>
+            <div class="sub">IF vs AE</div>
+            <div class="winner-badge" id="win-sil"></div>
+          </div>
+        </div>
+
+        <div class="chart-grid">
+          <div class="card">
+            <div class="card-title">ROC Curve Comparison</div>
+            <div class="chart-wrap"><canvas id="chartROC"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-title">
+              Precision / Recall / F1 / AUC — Side by Side
+            </div>
+            <div class="chart-wrap"><canvas id="chartMetrics"></canvas></div>
+          </div>
+        </div>
+
+        <div class="chart-grid">
+          <div class="card">
+            <div class="card-title">Isolation Forest — Score Distribution</div>
+            <div class="chart-wrap tall">
+              <canvas id="chartIFDist"></canvas>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">
+              Autoencoder — Reconstruction Error Distribution
+            </div>
+            <div class="chart-wrap tall">
+              <canvas id="chartAEDist"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-grid">
+          <div class="card">
+            <div class="card-title">Confusion Matrices</div>
+            <div class="cm-wrap" id="cmWrap"></div>
+          </div>
+          <div class="card">
+            <div class="card-title">IF Score vs AE Error — Per Sample</div>
+            <div class="chart-wrap tall">
+              <canvas id="chartScatter"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-grid">
+          <div class="card">
+            <div class="card-title">Overall Performance Radar</div>
+            <div class="chart-wrap tall"><canvas id="chartRadar"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Anomalies Detected vs Missed</div>
+            <div class="chart-wrap tall">
+              <canvas id="chartDetected"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="verdict">
+          <h2>📋 Evaluation Summary & Conclusion</h2>
+          <div class="verdict-grid">
+            <div class="verdict-item if">
+              <h3>🌲 Isolation Forest</h3>
+              <p id="if-summary">–</p>
+            </div>
+            <div class="verdict-item ae">
+              <h3>🧠 Autoencoder</h3>
+              <p id="ae-summary">–</p>
+            </div>
+          </div>
+          <div class="conclusion" id="conclusion">–</div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      Chart.defaults.color = "#7c849a";
+      Chart.defaults.borderColor = "#2a2d3e";
+      Chart.defaults.font.family = "'Segoe UI',system-ui,sans-serif";
+      const IF = "#6c63ff",
+        AE = "#00d4aa",
+        DANGER = "#ff4f6d",
+        GOOD = "#3ecf8e",
+        WARN = "#ffc107";
+
+      async function load() {
+        const res = await fetch("/evaluation_data");
+        const d = await res.json();
+        document.getElementById("loading").style.display = "none";
+        document.getElementById("main-content").classList.remove("hidden");
+        render(d);
+      }
+
+      function fmt(v) {
+        return (v * 100).toFixed(1) + "%";
+      }
+
+      function setWinner(ifV, aeV, id) {
+        const el = document.getElementById(id);
+        if (ifV > aeV) {
+          el.textContent = "▲ IF wins";
+          el.style.color = IF;
+        } else if (aeV > ifV) {
+          el.textContent = "▲ AE wins";
+          el.style.color = AE;
+        } else {
+          el.textContent = "Tie";
+        }
+      }
+
+      function makeHist(values, bins) {
+        if (!values || !values.length) return { labels: [], counts: [] };
+        const mn = Math.min(...values),
+          mx = Math.max(...values);
+        const step = (mx - mn) / bins || 1;
+        const counts = Array(bins).fill(0);
+        const labels = [];
+        for (let i = 0; i < bins; i++) labels.push((mn + i * step).toFixed(2));
+        values.forEach((v) => {
+          let idx = Math.floor((v - mn) / step);
+          if (idx >= bins) idx = bins - 1;
+          counts[idx]++;
+        });
+        return { labels, counts };
+      }
+
+      function render(d) {
+        ["precision", "recall", "f1", "auc", "sil"].forEach((m) => {
+          document.getElementById("if-" + m).textContent = d["if_" + m];
+          document.getElementById("ae-" + m).textContent = d["ae_" + m];
+          setWinner(d["if_" + m], d["ae_" + m], "win-" + m);
+        });
+
+        // ROC
+        new Chart(document.getElementById("chartROC"), {
+          type: "line",
+          data: {
+            datasets: [
+              {
+                label: "Isolation Forest (AUC=" + d.if_auc + ")",
+                data: d.if_roc.fpr.map((x, i) => ({ x, y: d.if_roc.tpr[i] })),
+                borderColor: IF,
+                backgroundColor: IF + "22",
+                fill: true,
+                pointRadius: 0,
+                tension: 0.3,
+                borderWidth: 2,
+              },
+              {
+                label: "Autoencoder (AUC=" + d.ae_auc + ")",
+                data: d.ae_roc.fpr.map((x, i) => ({ x, y: d.ae_roc.tpr[i] })),
+                borderColor: AE,
+                backgroundColor: AE + "22",
+                fill: true,
+                pointRadius: 0,
+                tension: 0.3,
+                borderWidth: 2,
+              },
+              {
+                label: "Random",
+                data: [
+                  { x: 0, y: 0 },
+                  { x: 1, y: 1 },
+                ],
+                borderColor: "#555",
+                borderDash: [5, 5],
+                pointRadius: 0,
+                fill: false,
+                borderWidth: 1,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: "bottom" } },
+            scales: {
+              x: {
+                type: "linear",
+                min: 0,
+                max: 1,
+                title: { display: true, text: "False Positive Rate" },
+                grid: { color: "#2a2d3e" },
+              },
+              y: {
+                min: 0,
+                max: 1,
+                title: { display: true, text: "True Positive Rate" },
+                grid: { color: "#2a2d3e" },
+              },
+            },
+          },
+        });
+
+        // Metrics bar
+        new Chart(document.getElementById("chartMetrics"), {
+          type: "bar",
+          data: {
+            labels: ["Precision", "Recall", "F1 Score", "AUC", "Silhouette"],
+            datasets: [
+              {
+                label: "Isolation Forest",
+                data: [
+                  d.if_precision,
+                  d.if_recall,
+                  d.if_f1,
+                  d.if_auc,
+                  d.if_sil,
+                ],
+                backgroundColor: IF + "cc",
+                borderRadius: 6,
+              },
+              {
+                label: "Autoencoder",
+                data: [
+                  d.ae_precision,
+                  d.ae_recall,
+                  d.ae_f1,
+                  d.ae_auc,
+                  d.ae_sil,
+                ],
+                backgroundColor: AE + "cc",
+                borderRadius: 6,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: "top" } },
+            scales: {
+              x: { grid: { color: "#2a2d3e" } },
+              y: {
+                min: 0,
+                max: 1,
+                grid: { color: "#2a2d3e" },
+                ticks: { callback: (v) => (v * 100).toFixed(0) + "%" },
+              },
+            },
+          },
+        });
+
+        // IF score dist
+        const ifNH = makeHist(d.if_normal_scores, 20);
+        const ifAH = makeHist(d.if_anom_scores, 20);
+        new Chart(document.getElementById("chartIFDist"), {
+          type: "bar",
+          data: {
+            labels: ifNH.labels,
+            datasets: [
+              {
+                label: "Normal",
+                data: ifNH.counts,
+                backgroundColor: GOOD + "99",
+                borderRadius: 3,
+              },
+              {
+                label: "Anomalous",
+                data: ifAH.counts,
+                backgroundColor: DANGER + "99",
+                borderRadius: 3,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: "top" } },
+            scales: {
+              x: {
+                grid: { color: "#2a2d3e" },
+                title: {
+                  display: true,
+                  text: "Anomaly Score (higher = more anomalous)",
+                },
+              },
+              y: {
+                grid: { color: "#2a2d3e" },
+                title: { display: true, text: "Count" },
+              },
+            },
+          },
+        });
+
+        // AE error dist
+        const aeNH = makeHist(d.ae_normal_errors, 20);
+        const aeAH = makeHist(d.ae_anom_errors, 20);
+        new Chart(document.getElementById("chartAEDist"), {
+          type: "bar",
+          data: {
+            labels: aeNH.labels,
+            datasets: [
+              {
+                label: "Normal",
+                data: aeNH.counts,
+                backgroundColor: GOOD + "99",
+                borderRadius: 3,
+              },
+              {
+                label: "Anomalous",
+                data: aeAH.counts,
+                backgroundColor: DANGER + "99",
+                borderRadius: 3,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: "top" } },
+            scales: {
+              x: {
+                grid: { color: "#2a2d3e" },
+                title: {
+                  display: true,
+                  text: "Reconstruction Error (higher = more anomalous)",
+                },
+              },
+              y: {
+                grid: { color: "#2a2d3e" },
+                title: { display: true, text: "Count" },
+              },
+            },
+          },
+        });
+
+        // Confusion matrices
+        function buildCM(cm, label, color) {
+          const tn = cm[0][0],
+            fp = cm[0][1],
+            fn = cm[1][0],
+            tp = cm[1][1];
+          return `<div class="cm-block">
+      <h4 style="color:${color}">${label}</h4>
+      <div class="cm-grid">
+        <div class="cm-cell cm-header"></div>
+        <div class="cm-cell cm-header">Pred Normal</div>
+        <div class="cm-cell cm-header">Pred Anom</div>
+        <div class="cm-cell cm-header">Act Normal</div>
+        <div class="cm-cell cm-tn">${tn}<br><span style="font-size:.65rem;font-weight:400">TN</span></div>
+        <div class="cm-cell cm-fp">${fp}<br><span style="font-size:.65rem;font-weight:400">FP</span></div>
+        <div class="cm-cell cm-header">Act Anom</div>
+        <div class="cm-cell cm-fn">${fn}<br><span style="font-size:.65rem;font-weight:400">FN</span></div>
+        <div class="cm-cell cm-tp">${tp}<br><span style="font-size:.65rem;font-weight:400">TP</span></div>
+      </div></div>`;
+        }
+        document.getElementById("cmWrap").innerHTML =
+          buildCM(d.if_cm, "Isolation Forest", IF) +
+          buildCM(d.ae_cm, "Autoencoder", AE);
+
+        // Scatter
+        const scN = d.scatter.filter((s) => s.true === 1);
+        const scA = d.scatter.filter((s) => s.true === -1);
+        new Chart(document.getElementById("chartScatter"), {
+          type: "scatter",
+          data: {
+            datasets: [
+              {
+                label: "Normal",
+                data: scN.map((s) => ({ x: s.if_score, y: s.ae_error })),
+                backgroundColor: GOOD + "bb",
+                pointRadius: 4,
+              },
+              {
+                label: "Anomalous",
+                data: scA.map((s) => ({ x: s.if_score, y: s.ae_error })),
+                backgroundColor: DANGER + "bb",
+                pointRadius: 5,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: "top" } },
+            scales: {
+              x: {
+                grid: { color: "#2a2d3e" },
+                title: { display: true, text: "IF Score" },
+              },
+              y: {
+                grid: { color: "#2a2d3e" },
+                title: { display: true, text: "AE Reconstruction Error" },
+              },
+            },
+          },
+        });
+
+        // Radar
+        new Chart(document.getElementById("chartRadar"), {
+          type: "radar",
+          data: {
+            labels: ["Precision", "Recall", "F1 Score", "AUC", "Silhouette"],
+            datasets: [
+              {
+                label: "Isolation Forest",
+                data: [
+                  d.if_precision,
+                  d.if_recall,
+                  d.if_f1,
+                  d.if_auc,
+                  d.if_sil,
+                ],
+                borderColor: IF,
+                backgroundColor: IF + "33",
+                pointBackgroundColor: IF,
+                borderWidth: 2,
+              },
+              {
+                label: "Autoencoder",
+                data: [
+                  d.ae_precision,
+                  d.ae_recall,
+                  d.ae_f1,
+                  d.ae_auc,
+                  d.ae_sil,
+                ],
+                borderColor: AE,
+                backgroundColor: AE + "33",
+                pointBackgroundColor: AE,
+                borderWidth: 2,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: "bottom" } },
+            scales: {
+              r: {
+                min: 0,
+                max: 1,
+                grid: { color: "#2a2d3e" },
+                ticks: { display: false },
+                pointLabels: { color: "#a0aec0" },
+              },
+            },
+          },
+        });
+
+        // Detected vs Missed
+        const ifTP = d.if_cm[1][1],
+          ifFN = d.if_cm[1][0];
+        const aeTP = d.ae_cm[1][1],
+          aeFN = d.ae_cm[1][0];
+        new Chart(document.getElementById("chartDetected"), {
+          type: "bar",
+          data: {
+            labels: ["Isolation Forest", "Autoencoder"],
+            datasets: [
+              {
+                label: "Detected (TP)",
+                data: [ifTP, aeTP],
+                backgroundColor: [IF + "cc", AE + "cc"],
+                borderRadius: 6,
+              },
+              {
+                label: "Missed (FN)",
+                data: [ifFN, aeFN],
+                backgroundColor: [DANGER + "99", DANGER + "99"],
+                borderRadius: 6,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: "top" } },
+            scales: {
+              x: { grid: { color: "#2a2d3e" } },
+              y: {
+                grid: { color: "#2a2d3e" },
+                beginAtZero: true,
+                title: { display: true, text: "# Anomalous Students" },
+              },
+            },
+          },
+        });
+
+        // Verdict
+        const ifWins = ["precision", "recall", "f1", "auc", "sil"].filter(
+          (m) => d["if_" + m] > d["ae_" + m],
+        ).length;
+        const aeWins = 5 - ifWins;
+        const better = ifWins >= aeWins ? "Isolation Forest" : "Autoencoder";
+        const betterColor = ifWins >= aeWins ? IF : AE;
+
+        document.getElementById("if-summary").textContent =
+          `Precision: ${fmt(d.if_precision)} | Recall: ${fmt(d.if_recall)} | F1: ${fmt(d.if_f1)} | AUC: ${d.if_auc} | Silhouette: ${d.if_sil}. ` +
+          `Detected ${d.if_cm[1][1]} of ${d.n_anomalous} anomalous students. False positives: ${d.if_cm[0][1]}.`;
+
+        document.getElementById("ae-summary").textContent =
+          `Precision: ${fmt(d.ae_precision)} | Recall: ${fmt(d.ae_recall)} | F1: ${fmt(d.ae_f1)} | AUC: ${d.ae_auc} | Silhouette: ${d.ae_sil}. ` +
+          `Detected ${d.ae_cm[1][1]} of ${d.n_anomalous} anomalous students. False positives: ${d.ae_cm[0][1]}.`;
+
+        document.getElementById("conclusion").innerHTML =
+          `Based on evaluation across 5 metrics, <strong style="color:${betterColor}">${better}</strong> performs better overall ` +
+          `(winning ${Math.max(ifWins, aeWins)}/5 metrics). The <strong>ROC AUC</strong> confirms which model better separates ` +
+          `normal from anomalous behaviour. The <strong>Silhouette Score</strong> shows how naturally clusters form. ` +
+          `Since missing real cheaters (false negatives) is costly in an exam system, prioritise the model with higher ` +
+          `<strong>Recall</strong>. If false accusations matter more, prioritise <strong>Precision</strong>. ` +
+          `The model with higher AUC and F1 is recommended for deployment.`;
+      }
+
+      load();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,597 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Examiner Dashboard - ExamGuard</title>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: "Segoe UI", sans-serif;
+        min-height: 100vh;
+        color: #fff;
+        position: relative;
+        overflow-x: hidden;
+        background: linear-gradient(
+          135deg,
+          #1a1a2e 0%,
+          #16213e 50%,
+          #0f3460 100%
+        );
+      }
+      body::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: transparent;
+        pointer-events: none;
+        z-index: 0;
+      }
+      .navbar,
+      .container {
+        position: relative;
+        z-index: 1;
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image:
+          linear-gradient(rgba(0, 255, 255, 0.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(0, 255, 255, 0.03) 1px, transparent 1px),
+          linear-gradient(rgba(0, 255, 255, 0.02) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(0, 255, 255, 0.02) 1px, transparent 1px);
+        background-size:
+          100px 100px,
+          100px 100px,
+          20px 20px,
+          20px 20px;
+        background-position:
+          -1px -1px,
+          -1px -1px,
+          -1px -1px,
+          -1px -1px;
+        pointer-events: none;
+        z-index: 0;
+        animation: gridMove 20s linear infinite;
+      }
+      body::after {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background:
+          radial-gradient(
+            circle at 10% 20%,
+            rgba(0, 100, 255, 0.08) 0%,
+            transparent 40%
+          ),
+          radial-gradient(
+            circle at 90% 80%,
+            rgba(0, 255, 200, 0.08) 0%,
+            transparent 40%
+          ),
+          radial-gradient(
+            circle at 50% 50%,
+            rgba(100, 0, 255, 0.05) 0%,
+            transparent 60%
+          );
+        pointer-events: none;
+        z-index: 0;
+      }
+      @keyframes gridMove {
+        from {
+          background-position:
+            0 0,
+            0 0,
+            0 0,
+            0 0;
+        }
+        to {
+          background-position:
+            100px 100px,
+            100px 100px,
+            20px 20px,
+            20px 20px;
+        }
+      }
+      .navbar,
+      .container {
+        position: relative;
+        z-index: 1;
+      }
+
+      .navbar {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 15px 40px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .navbar h1 {
+        font-size: 20px;
+        color: #4fc3f7;
+      }
+      .username {
+        color: #a0aec0;
+        font-size: 14px;
+        font-weight: 500;
+        padding: 8px 12px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .navbar .user-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .navbar .user-info span {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 14px;
+      }
+      .logout-btn {
+        color: #fff;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 500;
+        padding: 8px 16px;
+        border-radius: 8px;
+        background: #e53e3e;
+        border: 1px solid #c53030;
+        transition: all 0.2s ease;
+      }
+      .logout-btn:hover {
+        background: #c53030;
+      }
+      .nav-link {
+        color: #a0aec0;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 500;
+        padding: 8px 16px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.05);
+        transition: all 0.2s ease;
+      }
+      .nav-link:hover {
+        color: #ffffff;
+        background: rgba(79, 172, 254, 0.2);
+        border-color: rgba(79, 172, 254, 0.5);
+      }
+      .nav-link.active {
+        color: #ffffff;
+        background: rgba(79, 172, 254, 0.2);
+        border-color: rgba(79, 172, 254, 0.5);
+      }
+      .container {
+        padding: 30px 40px;
+      }
+      .page-title {
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 5px;
+      }
+      .page-subtitle {
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 14px;
+        margin-bottom: 30px;
+      }
+      .stats-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+        margin-bottom: 30px;
+      }
+      .stat-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        padding: 20px 25px;
+      }
+      .stat-card .label {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.5);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 10px;
+      }
+      .stat-card .value {
+        font-size: 32px;
+        font-weight: 700;
+        color: #4fc3f7;
+      }
+      .stat-card .sub {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.4);
+        margin-top: 5px;
+      }
+      .section-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #4fc3f7;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .live-badge {
+        background: rgba(255, 107, 107, 0.2);
+        border: 1px solid rgba(255, 107, 107, 0.4);
+        color: #ff6b6b;
+        font-size: 11px;
+        padding: 3px 8px;
+        border-radius: 20px;
+        animation: pulse 1.5s infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+      .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 30px;
+      }
+      .card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        padding: 20px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      th {
+        text-align: left;
+        padding: 10px 12px;
+        color: rgba(255, 255, 255, 0.4);
+        font-weight: 500;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      td {
+        padding: 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        color: rgba(255, 255, 255, 0.8);
+      }
+      tr:last-child td {
+        border-bottom: none;
+      }
+      tr:hover td {
+        background: rgba(255, 255, 255, 0.03);
+      }
+      .badge {
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+      }
+      .badge.normal {
+        background: rgba(102, 187, 106, 0.2);
+        color: #66bb6a;
+        border: 1px solid rgba(102, 187, 106, 0.3);
+      }
+      .badge.anomalous {
+        background: rgba(255, 107, 107, 0.2);
+        color: #ff6b6b;
+        border: 1px solid rgba(255, 107, 107, 0.3);
+      }
+      .badge.pending {
+        background: rgba(255, 193, 7, 0.2);
+        color: #ffc107;
+        border: 1px solid rgba(255, 193, 7, 0.3);
+      }
+      .empty-state {
+        text-align: center;
+        padding: 40px;
+        color: rgba(255, 255, 255, 0.3);
+        font-size: 14px;
+      }
+      .refresh-btn {
+        padding: 8px 16px;
+        background: rgba(79, 195, 247, 0.1);
+        border: 1px solid rgba(79, 195, 247, 0.3);
+        border-radius: 8px;
+        color: #4fc3f7;
+        font-size: 12px;
+        cursor: pointer;
+        margin-left: auto;
+        display: block;
+        margin-bottom: 15px;
+      }
+      .full-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 30px;
+        @keyframes slideIn {
+          from {
+            transform: translateX(100px);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="navbar">
+      <h1>🎓 ExamGuard</h1>
+      <div class="user-info">
+        <a href="/examiner" class="nav-link active">📊 Monitor</a>
+        <a href="/examiner/exams" class="nav-link">📋 Manage Exams</a>
+        <a href="/evaluation" class="nav-link">📈 Evaluation</a>
+        <span class="username">👤 {{ full_name }}</span>
+        <a href="/logout" class="logout-btn">Logout</a>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🔔 Anomaly Alerts</h3>
+
+      <div id="notificationList"></div>
+    </div>
+    <div id="alerts-container">
+      <h3>Live Alerts</h3>
+    </div>
+
+    <div class="container">
+      <div class="page-title">Examiner Dashboard</div>
+      <div class="page-subtitle">
+        Monitor students in real time and detect anomalous behaviour
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="label">Active Students</div>
+          <div class="value" id="activeCount">0</div>
+          <div class="sub">Currently taking exam</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Total Submissions</div>
+          <div class="value" id="totalCount">0</div>
+          <div class="sub">All time</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Anomalies Detected</div>
+          <div class="value" id="anomalyCount" style="color: #ff6b6b">0</div>
+          <div class="sub">Flagged students</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Normal Students</div>
+          <div class="value" id="normalCount" style="color: #66bb6a">0</div>
+          <div class="sub">No issues detected</div>
+        </div>
+      </div>
+
+      <!-- Live Students -->
+      <div class="full-card">
+        <div class="section-title">
+          🔴 Live Students
+          <span class="live-badge">LIVE</span>
+        </div>
+        <div id="liveStudents">
+          <div class="empty-state">No students currently taking exams</div>
+        </div>
+      </div>
+
+      <!-- Behaviour Logs -->
+      <div class="full-card">
+        <div class="section-title">📋 Behaviour Logs</div>
+        <button class="refresh-btn" onclick="loadLogs()">🔄 Refresh</button>
+        <div id="logsTable">
+          <div class="empty-state">No behaviour logs yet</div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Load live students
+      // Track previously flagged students to avoid duplicate alerts
+      let flaggedStudents = new Set();
+
+      async function loadLiveStudents() {
+        const res = await fetch("/api/live_students", {
+          credentials: "include",
+        });
+        const students = await res.json();
+
+        document.getElementById("activeCount").textContent = students.length;
+
+        if (students.length === 0) {
+          document.getElementById("liveStudents").innerHTML =
+            '<div class="empty-state">No students currently taking exams</div>';
+          return;
+        }
+
+        let html = `<table>
+        <tr>
+            <th>Student Name</th>
+            <th>Exam</th>
+            <th>Start Time</th>
+            <th>Tab Switches</th>
+            <th>Total Clicks</th>
+            <th>Status</th>
+        </tr>`;
+
+        students.forEach((s) => {
+          let badgeClass =
+            s.anomaly_label === -1
+              ? "anomalous"
+              : s.anomaly_label === null
+                ? "pending"
+                : "normal";
+          html += `<tr>
+            <td>${s.name}</td>
+            <td>${s.exam}</td>
+            <td>${s.start_time}</td>
+            <td>${s.tab_switches}</td>
+            <td>${s.total_clicks}</td>
+            <td><span class="badge ${badgeClass}">${s.status}</span></td>
+        </tr>`;
+
+          // Trigger alert if anomalous and not already alerted
+          if (s.anomaly_label === -1 && !flaggedStudents.has(s.name)) {
+            flaggedStudents.add(s.name);
+            showAlert(s.name);
+          }
+        });
+        html += "</table>";
+        document.getElementById("liveStudents").innerHTML = html;
+      }
+
+      function showAlert(studentName) {
+        const alert = document.createElement("div");
+        alert.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: rgba(255,50,50,0.95);
+        border: 1px solid #ff6b6b;
+        border-radius: 12px;
+        padding: 20px 25px;
+        color: white;
+        font-family: 'Segoe UI', sans-serif;
+        font-size: 14px;
+        z-index: 9999;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        max-width: 300px;
+        animation: slideIn 0.3s ease;
+    `;
+        alert.innerHTML = `
+        <div style="font-size:20px; margin-bottom:8px;">🚨 Anomaly Detected!</div>
+        <div style="font-weight:700; font-size:16px; margin-bottom:5px;">${studentName}</div>
+        <div style="opacity:0.85; font-size:13px;">Suspicious behaviour detected during exam.</div>
+        <button onclick="this.parentElement.remove()" style="
+            margin-top:12px;
+            background:rgba(255,255,255,0.2);
+            border:none;
+            border-radius:6px;
+            color:white;
+            padding:6px 14px;
+            cursor:pointer;
+            font-size:12px;
+            width:100%;
+        ">Dismiss</button>
+    `;
+        document.body.appendChild(alert);
+
+        // Auto dismiss after 8 seconds
+        setTimeout(() => {
+          if (alert.parentElement) alert.remove();
+        }, 8000);
+      }
+
+      // Load behaviour logs
+      async function loadLogs() {
+        const res = await fetch("/api/behaviour_logs", {
+          credentials: "include",
+        });
+        const logs = await res.json();
+
+        document.getElementById("totalCount").textContent = logs.length;
+
+        let anomalies = logs.filter((l) => l.anomaly_label === -1).length;
+        let normal = logs.filter((l) => l.anomaly_label === 1).length;
+        document.getElementById("anomalyCount").textContent = anomalies;
+        document.getElementById("normalCount").textContent = normal;
+
+        if (logs.length === 0) {
+          document.getElementById("logsTable").innerHTML =
+            '<div class="empty-state">No behaviour logs yet</div>';
+          return;
+        }
+
+        let html = `<table>
+                <tr>
+                    <th>Student</th>
+                    <th>Tab Switches</th>
+                    <th>Total Clicks</th>
+                    <th>Time on Exam (s)</th>
+                    <th>IF Result</th>
+                    <th>AE Result</th>
+                    <th>Status</th>
+                    <th>Timestamp</th>
+                </tr>`;
+
+        logs.forEach((l) => {
+          let badgeClass =
+            l.anomaly_label === -1
+              ? "anomalous"
+              : l.anomaly_label === null
+                ? "pending"
+                : "normal";
+          html += `<tr>
+                    <td>${l.name}</td>
+                    <td>${l.tab_switches}</td>
+                    <td>${l.total_clicks}</td>
+                    <td>${l.time_on_exam}</td>
+                    <td>${l.anomaly_label === -1 ? "🚨 Anomalous" : l.anomaly_label === 1 ? "✅ Normal" : "Pending"}</td>
+                    <td><span class="badge ${badgeClass}">${l.status}</span></td>
+                    <td>${l.timestamp}</td>
+                </tr>`;
+        });
+        html += "</table>";
+        document.getElementById("logsTable").innerHTML = html;
+      }
+
+      // Auto refresh every 10 seconds
+      loadLiveStudents();
+      loadLogs();
+      setInterval(loadLiveStudents, 10000);
+      setInterval(loadLogs, 10000);
+      const socket = io();
+
+      socket.on("anomaly_alert", function (data) {
+        const alertBox = document.createElement("div");
+
+        alertBox.className = "alert alert-danger";
+
+        alertBox.innerHTML = `
+        <strong>🚨 ANOMALY DETECTED</strong><br>
+        Student: ${data.student}<br>
+        Tab Switches: ${data.tab_switches}<br>
+        Clicks: ${data.clicks}<br>
+        Time: ${data.time}
+    `;
+
+        document.getElementById("alerts-container").prepend(alertBox);
+
+        // Browser popup
+        alert(`Anomaly detected for ${data.student}`);
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login - E-Learning Anomaly Detection</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: "Segoe UI", sans-serif;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow-x: hidden;
+        background: linear-gradient(
+          135deg,
+          #0d1b2a 0%,
+          #1b263b 50%,
+          #415a77 100%
+        );
+      }
+      body::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: transparent;
+        pointer-events: none;
+        z-index: 0;
+      }
+      .login-container {
+        position: relative;
+        z-index: 1;
+      }
+      .login-container {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 50px 40px;
+        width: 400px;
+        box-shadow: 0 25px 45px rgba(0, 0, 0, 0.3);
+      }
+      .logo {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+      .logo h1 {
+        color: #fff;
+        font-size: 24px;
+        font-weight: 700;
+      }
+      .logo p {
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 13px;
+        margin-top: 5px;
+      }
+      .logo .icon {
+        font-size: 50px;
+        margin-bottom: 10px;
+      }
+      .form-group {
+        margin-bottom: 20px;
+      }
+      label {
+        display: block;
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 13px;
+        margin-bottom: 8px;
+        font-weight: 500;
+      }
+      input {
+        width: 100%;
+        padding: 12px 16px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 10px;
+        color: #fff;
+        font-size: 14px;
+        outline: none;
+        transition: border 0.3s;
+      }
+      input:focus {
+        border-color: #4fc3f7;
+      }
+      input::placeholder {
+        color: rgba(255, 255, 255, 0.3);
+      }
+      .btn {
+        width: 100%;
+        padding: 13px;
+        background: linear-gradient(135deg, #4fc3f7, #0288d1);
+        border: none;
+        border-radius: 10px;
+        color: #fff;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: opacity 0.3s;
+        margin-top: 10px;
+      }
+      .btn:hover {
+        opacity: 0.9;
+      }
+      .error {
+        background: rgba(255, 80, 80, 0.2);
+        border: 1px solid rgba(255, 80, 80, 0.4);
+        color: #ff6b6b;
+        padding: 10px 15px;
+        border-radius: 8px;
+        font-size: 13px;
+        margin-bottom: 20px;
+        text-align: center;
+      }
+      .hint {
+        margin-top: 25px;
+        padding-top: 20px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .hint p {
+        color: rgba(255, 255, 255, 0.4);
+        font-size: 12px;
+        margin-bottom: 5px;
+      }
+      .hint span {
+        color: #4fc3f7;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="login-container">
+      <div class="logo">
+        <div class="icon">🎓</div>
+        <h1>ExamGuard</h1>
+        <p>E-Learning Anomaly Detection System</p>
+      </div>
+
+      {% if error %}
+      <div class="error">{{ error }}</div>
+      {% endif %}
+
+      <form method="POST">
+        <div class="form-group">
+          <label>Username</label>
+          <input
+            type="text"
+            name="username"
+            placeholder="Enter your username"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <div style="position: relative">
+            <input
+              type="password"
+              name="password"
+              id="passwordInput"
+              placeholder="Enter your password"
+              required
+            />
+            <span
+              onclick="togglePassword()"
+              style="
+                position: absolute;
+                right: 14px;
+                top: 50%;
+                transform: translateY(-50%);
+                cursor: pointer;
+                font-size: 18px;
+                opacity: 0.6;
+              "
+              id="eyeIcon"
+              >👁</span
+            >
+          </div>
+        </div>
+        <button type="submit" class="btn">Login</button>
+      </form>
+
+      <div class="hint">
+        <p>
+          Student logins: <span>student1, student2, student3</span> / pass:
+          <span>pass123</span>
+        </p>
+        <p>
+          Examiner login: <span>examiner1</span> / pass: <span>exam123</span>
+        </p>
+      </div>
+    </div>
+    <script>
+      function togglePassword() {
+        const input = document.getElementById("passwordInput");
+        const icon = document.getElementById("eyeIcon");
+        if (input.type === "password") {
+          input.type = "text";
+          icon.style.opacity = "1";
+        } else {
+          input.type = "password";
+          icon.style.opacity = "0.6";
+        }
+      }
+    </script>
+  </body>
+</html>
